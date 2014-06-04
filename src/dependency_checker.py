@@ -18,6 +18,5 @@ def command_is_available(command):
         subprocess.call(["rm", "junk"])
         return False
 
-def primer3_core_is_installed():
-    return command_is_available("primer3_core --help")
-
+def fastqc_is_installed():
+    return command_is_available("fastqc --help")
