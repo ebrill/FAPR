@@ -14,9 +14,10 @@ class CheckDependencies(luigi.Task):
         # Terminating the run() method means the output() thing doesn't get 
         # created, which means the rest of the pipeline fails. Which is what
         # we want, if fastqc isn't available...
+        print "checkdependenciesrunning"
         if not fastqc_is_installed():
             return
-        pass
+        os.system("touch dependencies_checked")   
 
     def output(self):
         # TODO okay, figure out how to indicate that CheckDependencies.run()
@@ -28,13 +29,13 @@ class CheckDependencies(luigi.Task):
         # So maybe go read Luigi docs to see if there's a non-file-creating way to implement
         # the output() method, some way just to say "hey we're good" like setting a variable
         # to True or something. IDK
-        pass
+        return luigi.LocalTarget("dependencies_checked")
 
 
 class FastQcGo(luigi.Task): 
 
     def requires(self):
-        CheckDependencies()
+       return CheckDependencies()
 
     def run(self): 
         print("hello")
