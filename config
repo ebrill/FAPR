@@ -1,0 +1,20 @@
+module load genomeanalysis fastqc
+
+fastqc_path= fastqc
+
+trinity_path= /data0/opt/AssemblySoftware/trinityrnaseq_r20131110/Trinity.pl
+
+other things in data0/opt/AssemblySoftware
+	Trinity
+	Bowtie
+	Cufflinks
+	Tophat
+	bwa
+
+samtools_path= /data0/opt/SequenceHandling/samtools/samtools 
+
+bamtools_path= /data0/opt/SequenceHandling/bamtools/pezmaster31-bamtools-6111130/bin/bamtools-2.1.1
+
+bwa_path= /data0/opt/AssemblySoftware/bwa-0.6.2/bwa 
+
+
