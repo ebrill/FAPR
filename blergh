@@ -1,0 +1,182 @@
+class RunRawDatainFastQC(luigi.Task):
+
+    def run(self):
+	pass
+	# mkdir ../1_Fastqc_RawData 
+	# cd ../RawData/  
+	# fastqc -t 20 -o ../1_Fastqc_RawData *fastq
+	# cd ../Scripts
+	# ./scrape_fastqc.py ../1_Fastqc_RawData > ../1_Fastqc_RawData/fastqc.summary.txt
+
+    def output(self):
+	pass
+	# run fastqc, scrape, fastqc summary txt file
+
+    def requires(self):
+	pass
+	# you need fastqc and some raw data
+
+class FilterRawDataUsingTrimmomatic(luigi.Task):
+
+    def run(self):
+	pass
+	# mkdir ../2_FilterRawData
+	# cd ../2_FilterRawData
+	# cp ../Scripts/trimmomatic-0.32.jar . 
+	# cp ../Scripts/TruSeq3-PE.fa . 
+	# for x in `ls ../RawData | awk -F "." '{print $1}'|sort|uniq` 
+	# do 
+	# echo $x
+	# java -jar trimmomatic-0.32.jar PE -threads 32 -phred33 ../RawData/$x.R1.fastq ../RawData/$x.R2.fastq $x.trimmed.R1.fastq $x.single.R1.fastq $x.trimmed.R2.fastq $x.single.R2.fastq ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:10 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:36
+	# done
+	# mkdir Single 
+        # mv *single* Single/
+	# rm trimmomatic-0.32.jar 
+	# rm TruSeq3-PE.fa 
+
+    def output(self):
+	pass
+	# run trimmomatic, some other crap we went over but now 5 weeks later i do not remember
+
+    def requires(self):
+	pass
+	# trimmomatic, needs .fastq files, user needs to differentiate between SE or PE reads & other parameters
+
+class RunFastQCAgainNotSureWhyMaybeRunningFilteredDataNow(luigi.Task):
+	
+    def run(self):
+	pass
+	# mkdir ../3_Fastqc_FilterRawData
+	# cd ../2_FilterRawData/  
+        # fastqc -t 32 -o ../3_Fastqc_FilterRawData *fastq
+	# cd ../Scripts
+	# ./scrape_fastqc.py ../3_Fastqc_FilterRawData > ../3_Fastqc_FilterRawData/fastqc.summary.txt
+
+    def output(self):
+	pass	
+	# run fastqc on filtered data
+
+    def requires(self):
+	pass 
+	# filtered .fastq data, fastqc
+
+class MergeSomeCrap(luigi.Task):
+    
+    def run(self):
+	pass
+	# mkdir ../4_MergeFilterSamplesByExperiment
+	# for x in `ls ../2_FilterRawData | awk -F "_" '{print $1}' | sort | uniq` 
+	# do 
+	# echo $x
+	# cat ../2_FilterRawData/$x*trimmed*R1.fastq >> ../4_MergeFilterSamplesByExperiment/$x.trimmed.R1.fastq
+	# cat ../2_FilterRawData/$x*trimmed*R2.fastq >> ../4_MergeFilterSamplesByExperiment/$x.trimmed.R2.fastq
+	# done
+	# cat ../2_FilterRawData/*trimmed*R1.fastq > ../4_MergeFilterSamplesByExperiment/all.trimmed.R1.fastq
+	# cat ../2_FilterRawData/*trimmed*R2.fastq > ../4_MergeFilterSamplesByExperiment/all.trimmed.R2.fastq
+
+    def output(self):
+	pass
+	# no idea what's going on here, I guess appending "$x" and overwriting "all" from earlier stuff - is this necessary?
+
+    def requires(self):
+	pass 
+	# nothing needed I don't think... 
+
+class NormalizeReadsTrinity(luigi.Task):
+
+    def run(self):
+	pass
+	# TRINITY_ROOT='/data0/opt/AssemblySoftware/trinityrnaseq_r20131110/'
+	# ASSEM_MEMORY=200G #MAKE SURE TO PUT G
+	# ASSEM_THREADS=32
+	# ASSEM_MINKMER=1
+	# SS_LIB_TYPE=
+	# JACCARD_CLIP=  #FILL IN WITH "--jaccard_clip" if you want to use, blank will skip
+	# ##ALSO CAN MODIFY TO ADD BUTTERFLY OPTIONS
+
+	# mkdir ../5_NormalizeReads
+ 	# cd ../5_NormalizeReads
+	# ln -s ../4_MergeFilterSamplesByExperiment/* . 
+
+	# ulimit
+	# for x in `ls * | awk -F "." '{print $1}' | sort | uniq`
+	# do 
+	# echo normalizing $x
+	# $TRINITY_ROOT/util/normalize_by_kmer_coverage.pl  --seqType fq --JM $ASSEM_MEMORY --max_cov 50 --left $x.trimmed.R1.fastq --right $x.trimmed.R2.fastq --JELLY_CPU 30 --pairs_together --output $x.normalized_reads
+	# done 
+
+    def output(self):
+	pass
+	# trinity (jellyfish) builds a k-mer catalog from reads in FASTA sequences and outputs a .fa file
+
+    def requires(self):
+	pass
+	# requires trimmed .fastq files, trinity
+
+class NormalizeReadsFastQC(luigi.Task):
+	
+    def run(self):
+	pass 
+	# mkdir ../5.1_FastqcNormReads
+	# cd ../5_NormalizeReads  
+	# fastqc -t 2 -o ../5.1_FastqcNormReads *fq
+	# cd ../Scripts
+	# ./scrape_fastqc.py ../5.1_FastqcNormReads  > ../5.1_FastqcNormReads/fastqc.summary.txt
+
+    def output(self):
+	pass
+	# output is a .fq file 
+
+    def requires(self):
+	pass
+	# not sure why we normalized both in trinity and fastqc... 
+
+class Assembly(luigi.Task):
+
+    def run(self): 
+	pass
+	# #Need Trinity installed and in path
+
+	# Some Variables:
+
+	# TRINITY_ROOT='/data0/opt/AssemblySoftware/trinity_beta_Jan28_2014_SGEplus'
+	# ASSEM_MEMORY=200G #MAKE SURE TO PUT G
+	# ASSEM_THREADS=30
+	# ASSEM_MINKMER=1
+	# SS_LIB_TYPE=RF
+	# JACCARD_CLIP=--jaccard_clip  #FILL IN WITH "--jaccard_clip" if you want to use, blank will skip
+	# ##ALSO CAN MODIFY TO ADD BUTTERFLY OPTIONS
+	# mkdir ../6_Assembly
+	# cd ../6_Assembly
+	# ln -s ../5_N*/*normal*fq . 
+	# echo "starting asssembly with parameters:"
+
+	# ulimit
+
+	# $TRINITY_ROOT/Trinity.pl --seqType fq --JM $ASSEM_MEMORY --left all.trimmed.R1.*norm*fq --right all.trimmed.R2.*norm*fq --CPU $ASSEM_THREADS $JACCARD_CLIP --min_kmer_cov $ASSEM_MINKMER --bflyCalculateCPU --bflyHeapSpaceInit 4G
+
+	# ln -s trinity_out_dir/Trinity.fasta . 
+
+	# if [ ! -f trinity_out_dir/Trinity.fasta ] ; then
+   		# echo "Problem with Assembly!";
+   		# cd ..
+   		# exit
+	# fi
+	# cd ..
+	# echo "Assembly ran successfully!"
+	# echo "proceed with Assembly Filtering"
+
+    def output(self):
+	pass
+	# um wat
+
+    def requires(self):
+	pass
+	# um wat 
+
+# not quite done yet 
+
+
+
+
+
